@@ -1,0 +1,53 @@
+$ shim a.out --player="abc123" --game="g123"
+
+shim => /games/g123
+    <= { ..., moves: ["a1a2", "b2b2"] }
+
+shim: a.out a1a2 b2b2
+
+a.out > shim
+c3c3
+
+shim => POST /games/g123/moves/2 "c3c3"
+     <= 200
+
+shim => /games/g123
+     <= { ..., moves: ["a1a2", "b2b2", "c3c3"]}
+shim => /games/g123
+     <= { ..., moves: ["a1a2", "b2b2", "c3c3"]}
+shim => /games/g123
+     <= { ..., moves: ["a1a2", "b2b2", "c3c3", "d4d4]}
+
+a.out < shim 
+d4d4
+
+a.out > shim
+e5e5
+
+(a.out might terminate upon seeing win)
+
+shim => POST /games/g123/moves/2 "e5e5"
+     <= 200
+
+shim => /games/g123
+     <= { ..., moves: ["a1a2", "b2b2", "c3c3", "d4d4", "e5e5"], winner: "abc123" }
+
+shim terminates
+
+
+
+shimin | a.out | shimout
+
+shimin:
+moveidx = $1
+while True:
+     if let Ok(move) = get("/games/g123/moves/moveidx") {
+          println!("{}", move)
+     }
+     move += 2
+
+shimout:
+while let Some(move) = input():
+     post("/games/g123/moves", move)
+
+     
